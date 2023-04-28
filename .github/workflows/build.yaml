@@ -1,0 +1,41 @@
+on: [push]
+jobs:
+  build-wasm:
+    runs-on: ubuntu-22.04
+    container: emscripten/emsdk:3.1.36
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: "taku910/mecab"
+          path: mecab
+      - run: emconfigure mecab/mecab/configure --enable-static=true --enable-shared=false --enable-utf8-only
+      - run: emmake make CXXFLAGS='-O3 -Wall -std=c++11'
+      - run: mkdir out
+      - run: >-
+          emcc -O3 -Wall -std=c++11
+          -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=2147483648
+          -sENVIRONMENT=worker -sEXPORT_ES6=1 -sMODULARIZE=1 -sEXPORT_NAME=createModule
+          -sEXPORTED_FUNCTIONS=_malloc,_free,_mecab_new,_mecab_sparse_tostr,_mecab_sparse_tonode
+          -sEXPORTED_RUNTIME_METHODS=cwrap,writeAsciiToMemory,UTF8ToString,setValue,getValue,FS,WORKERFS
+          -l'workerfs.js'
+          src/.libs/libmecab.a
+          -o out/mecab.js
+      - uses: actions/upload-artifact@v3
+        with:
+          name: mecab
+          path: out/
+          if-no-files-found: error
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: mecab
+          path: src/
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "lts"
+      - uses: browser-actions/setup-chrome@v1
+      - run: wget https://github.com/leyhline/mecab-web-worker/releases/download/v0.1.0/unidic-3.1.0.zip
+      - run: npm install-ci-test

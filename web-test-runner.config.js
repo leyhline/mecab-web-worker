@@ -4,7 +4,7 @@ export default {
   nodeResolve: true,
   testFramework: {
     config: {
-      timeout: "30000",
+      timeout: "60000",
     },
   },
 };
