@@ -26,6 +26,7 @@ jobs:
           path: out/
           if-no-files-found: error
   test:
+    needs: build-wasm
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
