@@ -1,6 +1,5 @@
 .vscode/
 
-src/mecab.js
-src/mecab.wasm
+*.zip
 node_modules/
 dist/
