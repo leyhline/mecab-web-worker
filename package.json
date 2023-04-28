@@ -10,7 +10,7 @@
     "/src"
   ],
   "scripts": {
-    "pretest": "npm run build && copyfiles unidic-3.1.0.zip dist",
+    "pretest": "npm run build",
     "test": "web-test-runner",
     "prebuild": "rimraf dist",
     "build": "tsc",
