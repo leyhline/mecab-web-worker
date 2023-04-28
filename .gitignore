@@ -1,0 +1,6 @@
+.vscode/
+
+src/mecab.js
+src/mecab.wasm
+node_modules/
+dist/

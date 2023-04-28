@@ -1,0 +1,47 @@
+{
+  "name": "mecab-web-worker",
+  "version": "0.1.0",
+  "description": "A web worker for Japanese morphological analysis in the browser using WASM.",
+  "main": "index.js",
+  "type": "module",
+  "files": [
+    "/index.js",
+    "/dist",
+    "/src"
+  ],
+  "scripts": {
+    "pretest": "npm run build",
+    "test": "web-test-runner",
+    "prebuild": "rimraf dist",
+    "build": "tsc",
+    "postbuild": "copyfiles -f src/mecab.js src/mecab.d.ts src/mecab.wasm dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/^leyhline/mecab-web-worker.git"
+  },
+  "keywords": [
+    "mecab",
+    "japanese",
+    "language",
+    "wasm"
+  ],
+  "author": "Thomas Leyh",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/leyhline/mecab-web-worker/issues"
+  },
+  "homepage": "https://github.com/leyhline/mecab-web-worker#readme",
+  "devDependencies": {
+    "@esm-bundle/chai": "^4.3.4-fix.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.1",
+    "@typescript-eslint/parser": "^5.59.1",
+    "@web/test-runner": "^0.16.1",
+    "copyfiles": "^2.4.1",
+    "eslint": "^8.39.0",
+    "eslint-config-prettier": "^8.8.0",
+    "prettier": "^2.8.8",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.0.4"
+  }
+}
