@@ -1,5 +1,5 @@
 import { expect } from "@esm-bundle/chai";
-import { MecabWorker } from "./MecabWorker.js";
+import { MecabWorker } from "./index.js";
 
 describe("MecabWorker integration tests", () => {
   it("fails to create a worker when no dictionary was found", (done) => {
