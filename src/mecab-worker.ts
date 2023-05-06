@@ -13,6 +13,7 @@ import type {
 } from "./MecabWorker.js";
 
 import type { Module } from "./mecab.js";
+import type { Features } from "./Dictionary.js";
 
 declare function postMessage(message: MecabData): void;
 
@@ -150,7 +151,7 @@ enum Stat {
   MECAB_EON_NODE,
 }
 
-class MecabNode {
+class MecabNode<T extends Features = Record<string, never>> {
   // accessing the struct fields using pointer arithmetic
   // https://github.com/taku910/mecab/blob/master/mecab/src/mecab.h#L98
   private readonly nextPtrOffset = 1 * 4;
@@ -161,93 +162,23 @@ class MecabNode {
 
   readonly nextPtr: number;
   readonly surface: string;
-  readonly featureCsv: string;
   readonly length: number;
   readonly stat: Stat;
 
-  feature?: UnidicFeature29;
+  features: string[] = [];
+  feature: T = {} as T;
 
   constructor(Module: Module, nodePtr: number) {
     this.nextPtr = Module.getValue(nodePtr + this.nextPtrOffset, "*");
     const surfacePtr = Module.getValue(nodePtr + this.surfacePtrOffset, "*");
     const featurePtr = Module.getValue(nodePtr + this.featurePtrOffset, "*");
-    this.featureCsv = Module.UTF8ToString(featurePtr);
+    const featureCsv = Module.UTF8ToString(featurePtr);
     this.length = Module.getValue(nodePtr + this.lengthOffset, "i16");
     this.surface = Module.UTF8ToString(surfacePtr, this.length);
     this.stat = Module.getValue(nodePtr + this.statOffset, "i8");
     if (this.stat === Stat.MECAB_NOR_NODE) {
-      this.feature = new UnidicFeature29(this.featureCsv);
+      this.features = parseFeatureCsv(featureCsv);
     }
-  }
-}
-
-class UnidicFeature29 {
-  pos1: string;
-  pos2: string;
-  pos3: string;
-  pos4: string;
-  cType: string;
-  cForm: string;
-  lForm: string;
-  lemma: string;
-  orth: string;
-  pron: string;
-  orthBase: string;
-  pronBase: string;
-  goshu: string;
-  iType: string;
-  iForm: string;
-  fType: string;
-  fForm: string;
-  iConType: string;
-  fConType: string;
-  type: string;
-  kana: string;
-  kanaBase: string;
-  form: string;
-  formBase: string;
-  aType: string;
-  aConType: string;
-  aModType: string;
-  lid: string;
-  lemmaId: string;
-
-  constructor(feature: string) {
-    const numberOfFields = 29;
-    const features = parseFeatureCsv(feature);
-    console.assert(
-      features.length === numberOfFields,
-      `Invalid feature length, expected ${numberOfFields}, got ${features.length} after parsing: "${feature}"`
-    );
-    this.pos1 = features[0];
-    this.pos2 = features[1];
-    this.pos3 = features[2];
-    this.pos4 = features[3];
-    this.cType = features[4];
-    this.cForm = features[5];
-    this.lForm = features[6];
-    this.lemma = features[7];
-    this.orth = features[8];
-    this.pron = features[9];
-    this.orthBase = features[10];
-    this.pronBase = features[11];
-    this.goshu = features[12];
-    this.iType = features[13];
-    this.iForm = features[14];
-    this.fType = features[15];
-    this.fForm = features[16];
-    this.iConType = features[17];
-    this.fConType = features[18];
-    this.type = features[19];
-    this.kana = features[20];
-    this.kanaBase = features[21];
-    this.form = features[22];
-    this.formBase = features[23];
-    this.aType = features[24];
-    this.aConType = features[25];
-    this.aModType = features[26];
-    this.lid = features[27];
-    this.lemmaId = features[28];
   }
 }
 
@@ -390,4 +321,4 @@ function fileToResponse(file: File): ResponseWithPath {
   return { pathname: file.name, response: new Response(file) };
 }
 
-export type { MecabNode, UnidicFeature29 };
+export type { MecabNode };

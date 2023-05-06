@@ -1,3 +1,4 @@
+import type { Dictionary, Features } from "./Dictionary.js";
 import type { MecabNode } from "./mecab-worker.js";
 
 interface MecabDataType {
@@ -72,8 +73,6 @@ export interface MecabMessageCallEvent extends MessageEvent {
 }
 
 interface MecabWorkerOptions {
-  cacheName?: string;
-  url?: string;
   noCache?: boolean;
   onUnzip?: (filename: string) => void;
   onCache?: (filename: string) => void;
@@ -89,15 +88,22 @@ interface MecabWorkerOptions {
  * const result = await worker.parse('青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望')
  * console.log(result)
  */
-export class MecabWorker {
-  protected worker: Worker;
-
-  static async create(options?: MecabWorkerOptions): Promise<MecabWorker> {
-    const mecabWorker = new MecabWorker();
-    return mecabWorker.init(options).then(() => mecabWorker);
+export class MecabWorker<T extends Features = Record<string, never>> {
+  private worker: Worker;
+  private wrapper?: (feature: string[]) => T;
+  /**
+   * Helper function to call `MecabWorker.init` after construction.
+   */
+  static async create<T extends Features = Record<string, never>>(
+    dictionary: Dictionary<T>,
+    options?: MecabWorkerOptions
+  ): Promise<MecabWorker<T>> {
+    const mecabWorker = new MecabWorker<T>(dictionary.wrapper);
+    return mecabWorker.init(dictionary, options).then(() => mecabWorker);
   }
 
-  constructor() {
+  constructor(wrapper?: (feature: string[]) => T) {
+    this.wrapper = wrapper;
     // Initially, I wanted to use `class MecabWorker extends Worker` and
     // `super(new URL(...)` but it seems this wasn't recognized by many
     // module bundlers. Now, it's just a wrapper around a Worker.
@@ -106,19 +112,22 @@ export class MecabWorker {
     });
   }
 
-  async init(options?: MecabWorkerOptions): Promise<void> {
+  async init(
+    dictionary: Dictionary<T>,
+    options?: MecabWorkerOptions
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       if (options && options.onCache) {
         this.worker.addEventListener("message", (e: MecabMessageEvent) => {
           if (e.data.type === "cache") {
-            options && options.onCache && options.onCache(e.data.filename);
+            options.onCache!(e.data.filename);
           }
         });
       }
       if (options && options.onUnzip) {
         this.worker.addEventListener("message", (e: MecabMessageEvent) => {
           if (e.data.type === "unzip") {
-            options && options.onUnzip && options.onUnzip(e.data.filename);
+            options.onUnzip!(e.data.filename);
           }
         });
       }
@@ -134,24 +143,32 @@ export class MecabWorker {
       this.worker.addEventListener("message", listener);
       const initMessage: MecabCallInit = {
         type: "init",
-        cacheName: options?.cacheName || "unidic-3.1.0",
-        url: options?.url || "/unidic-3.1.0.zip",
+        cacheName: dictionary.cacheName,
+        url: dictionary.url,
         noCache: options?.noCache,
       };
       this.worker.postMessage(initMessage);
     });
   }
 
-  parse(text: string): Promise<string> {
+  async parse(text: string): Promise<string> {
     return new Promise((resolve) =>
       this.handleParse(resolve, { type: "parse", arg: text })
     );
   }
 
-  parseToNodes(text: string): Promise<MecabNode[]> {
-    return new Promise((resolve) =>
+  async parseToNodes(text: string): Promise<MecabNode<T>[]> {
+    const nodesPromise = new Promise<MecabNode<T>[]>((resolve) =>
       this.handleParse(resolve, { type: "parseToNodes", arg: text })
     );
+    if (this.wrapper) {
+      return nodesPromise.then((nodes) => {
+        nodes.forEach((node) => (node.feature = this.wrapper!(node.features)));
+        return nodes;
+      });
+    } else {
+      return nodesPromise;
+    }
   }
 
   private handleParse(
