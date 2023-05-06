@@ -1,4 +1,7 @@
-on: [push]
+name: Publish Package to npmjs and GitHub Package Registry
+on:
+  release:
+    types: [published]
 jobs:
   build-wasm:
     runs-on: ubuntu-22.04
@@ -25,7 +28,7 @@ jobs:
           name: mecab-wasm
           path: out/
           if-no-files-found: error
-  test:
+  publish-npm:
     needs: build-wasm
     runs-on: ubuntu-22.04
     steps:
@@ -37,7 +40,30 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-      - uses: browser-actions/setup-chrome@v1
-      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.1.0/unidic-mecab-2.1.2_bin.zip
-      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.1.0/unidic-3.1.0.zip
-      - run: npm install-ci-test
+          registry-url: "https://registry.npmjs.org"
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  publish-github:
+    needs: build-wasm
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: mecab-wasm
+          path: src/
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: "https://npm.pkg.github.com"
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
