@@ -1,3 +1,4 @@
+name: Build mecab and run integration tests
 on: [push]
 jobs:
   build-wasm:
