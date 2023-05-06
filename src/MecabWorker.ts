@@ -71,6 +71,14 @@ export interface MecabMessageCallEvent extends MessageEvent {
   data: MecabCallData;
 }
 
+interface MecabWorkerOptions {
+  cacheName?: string;
+  url?: string;
+  noCache?: boolean;
+  onUnzip?: (filename: string) => void;
+  onCache?: (filename: string) => void;
+}
+
 /**
  * MecabWorker subclasses Worker to provide a simple interface for interacting
  * with the actual worker script. Instead of using `postMessage` one can
@@ -81,25 +89,34 @@ export interface MecabMessageCallEvent extends MessageEvent {
  * const result = await worker.parse('青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望')
  * console.log(result)
  */
-export class MecabWorker extends Worker {
-  static create(options?: {
-    cacheName?: string;
-    url?: string;
-    noCache?: boolean;
-    onUnzip?: (filename: string) => void;
-    onCache?: (filename: string) => void;
-  }): Promise<MecabWorker> {
+export class MecabWorker {
+  protected worker: Worker;
+
+  static async create(options?: MecabWorkerOptions): Promise<MecabWorker> {
+    const mecabWorker = new MecabWorker();
+    return mecabWorker.init(options).then(() => mecabWorker);
+  }
+
+  constructor() {
+    // Initially, I wanted to use `class MecabWorker extends Worker` and
+    // `super(new URL(...)` but it seems this wasn't recognized by many
+    // module bundlers. Now, it's just a wrapper around a Worker.
+    this.worker = new Worker(new URL("./mecab-worker.js", import.meta.url), {
+      type: "module",
+    });
+  }
+
+  async init(options?: MecabWorkerOptions): Promise<void> {
     return new Promise((resolve, reject) => {
-      const worker = new MecabWorker();
       if (options && options.onCache) {
-        worker.addEventListener("message", (e: MecabMessageEvent) => {
+        this.worker.addEventListener("message", (e: MecabMessageEvent) => {
           if (e.data.type === "cache") {
             options && options.onCache && options.onCache(e.data.filename);
           }
         });
       }
       if (options && options.onUnzip) {
-        worker.addEventListener("message", (e: MecabMessageEvent) => {
+        this.worker.addEventListener("message", (e: MecabMessageEvent) => {
           if (e.data.type === "unzip") {
             options && options.onUnzip && options.onUnzip(e.data.filename);
           }
@@ -107,26 +124,22 @@ export class MecabWorker extends Worker {
       }
       const listener = (e: MecabMessageEvent) => {
         if (e.data.type === "ready") {
-          worker.removeEventListener("message", listener);
-          resolve(worker);
+          this.worker.removeEventListener("message", listener);
+          resolve();
         } else if (e.data.type == "error") {
-          worker.removeEventListener("message", listener);
+          this.worker.removeEventListener("message", listener);
           reject(e.data.message);
         }
       };
-      worker.addEventListener("message", listener);
+      this.worker.addEventListener("message", listener);
       const initMessage: MecabCallInit = {
         type: "init",
         cacheName: options?.cacheName || "unidic-3.1.0",
         url: options?.url || "/unidic-3.1.0.zip",
         noCache: options?.noCache,
       };
-      worker.postMessage(initMessage);
+      this.worker.postMessage(initMessage);
     });
-  }
-
-  constructor() {
-    super(new URL("./mecab-worker.js", import.meta.url), { type: "module" });
   }
 
   parse(text: string): Promise<string> {
@@ -147,11 +160,11 @@ export class MecabWorker extends Worker {
   ): void {
     const listener = (e: MecabMessageEvent) => {
       if (e.data.type === payload.type) {
-        this.removeEventListener("message", listener);
+        this.worker.removeEventListener("message", listener);
         resolve(e.data.result);
       }
     };
-    this.addEventListener("message", listener);
-    this.postMessage(payload);
+    this.worker.addEventListener("message", listener);
+    this.worker.postMessage(payload);
   }
 }

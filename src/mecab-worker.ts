@@ -284,10 +284,14 @@ function parseFeatureCsv(featureCsv: string): string[] {
  * @param files the dictionary files from the extracted unidic zip file
  */
 function mountDicionaryFiles(Module: Module, files: File[]): void {
+  const dicrc = files.filter((file) => file.name.endsWith("dicrc")).at(0);
+  if (!dicrc) throw new Error("dicrc file not found in archive");
+  const baseIndex = dicrc.name.search("dicrc");
+  const baseDir = dicrc.name.slice(0, baseIndex);
   Module.FS.mkdir("/mecab");
   Module.FS.mount(Module.WORKERFS, { files }, "/mecab");
   Module.FS.writeFile("/home/web_user/.mecabrc", "# This is a dummy file.");
-  Module.FS.chdir("/mecab/unidic");
+  Module.FS.chdir("/mecab/" + baseDir);
 }
 
 interface ResponseWithPath {
@@ -310,7 +314,8 @@ async function loadDictionaryFiles(
 async function loadDictionaryFilesFromCache(
   cacheName: string
 ): Promise<File[]> {
-  const cache = await caches.open(cacheName);
+  const c = tryForCachesApi();
+  const cache = await c.open(cacheName);
   const keys = await cache.keys();
   if (keys.length === 0) throw new Error("Cache is empty");
   const files: File[] = [];
@@ -339,7 +344,8 @@ async function loadDictionaryFilesFromNetwork(
   cacheName: string,
   url: string
 ): Promise<File[]> {
-  const cache = await caches.open(cacheName);
+  const c = tryForCachesApi();
+  const cache = await c.open(cacheName);
   try {
     const stream = await unzipDictionary(url);
     const reader = stream.getReader();
@@ -358,8 +364,18 @@ async function loadDictionaryFilesFromNetwork(
     }
     return files;
   } catch (error) {
-    caches.delete(cacheName);
+    c.delete(cacheName);
     throw error;
+  }
+}
+
+function tryForCachesApi(): CacheStorage {
+  try {
+    return caches;
+  } catch (error) {
+    throw new Error(
+      "CacheStorage is not supported; do you use HTTPS? See: https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage"
+    );
   }
 }
 
