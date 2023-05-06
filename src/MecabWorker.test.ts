@@ -1,9 +1,9 @@
 import { expect } from "@esm-bundle/chai";
 import { MecabWorker } from "./index.js";
-import { UNIDIC2, UNIDIC3 } from "./Dictionary.js";
+import { IPADIC, JUMANDIC, UNIDIC2, UNIDIC3 } from "./Dictionary.js";
 
-describe("MecabWorker integration tests", () => {
-  it("fails to create a worker when no dictionary was found", (done) => {
+describe("MecabWorker integration tests", function () {
+  it("fails to create a worker when no dictionary was found", function (done) {
     MecabWorker.create({ url: "not-a-real-path", cacheName: "test" })
       .then(() => {
         done(new Error("Should not have created a worker"));
@@ -16,81 +16,99 @@ describe("MecabWorker integration tests", () => {
       });
   });
 
-  it("parses a string, inserting spaces (with unidic2)", (done) => {
-    MecabWorker.create(UNIDIC2)
-      .then((worker) => {
-        worker
-          .parse(
-            "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
-          )
-          .then((result) => {
-            expect(result).to.equal(
-              "青森 県 と 秋田 県 に またがり 所在 する 十和田湖 、 御 鼻 部 山 展望 台 から の 展望"
-            );
-            done();
-          })
-          .catch((error) => done(error));
-      })
-      .catch((error) => done(error));
+  it("creates a worker with UNIDIC2 and parses a string, inserting spaces", async function () {
+    const worker = await MecabWorker.create(UNIDIC2);
+    const result = await worker.parse(
+      "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
+    );
+    expect(result).to.equal(
+      "青森 県 と 秋田 県 に またがり 所在 する 十和田湖 、 御 鼻 部 山 展望 台 から の 展望"
+    );
   });
 
-  it("parses a string, returning a node for each word (using unidic2)", (done) => {
-    MecabWorker.create(UNIDIC2)
-      .then((worker) => {
-        worker
-          .parseToNodes(
-            "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
-          )
-          .then((result) => {
-            expect(result.map((node) => node.surface).join(" ")).to.equal(
-              "青森 県 と 秋田 県 に またがり 所在 する 十和田湖 、 御 鼻 部 山 展望 台 から の 展望"
-            );
-            for (const node of result) {
-              expect(node.feature.kana).to.not.be.undefined;
-            }
-            done();
-          })
-          .catch((error) => done(error));
-      })
-      .catch((error) => done(error));
+  it("creates a worker with UNIDIC2 and parses a string, returning a node for each word", async function () {
+    const worker = await MecabWorker.create(UNIDIC2);
+    const nodes = await worker.parseToNodes(
+      "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
+    );
+    expect(nodes.map((node) => node.surface).join(" ")).to.equal(
+      "青森 県 と 秋田 県 に またがり 所在 する 十和田湖 、 御 鼻 部 山 展望 台 から の 展望"
+    );
+    for (const node of nodes) {
+      expect(node.features).to.have.lengthOf(26);
+      expect(node.feature.kana).to.not.be.undefined;
+    }
   });
 
-  it("parses a string, inserting spaces (with unidic3)", (done) => {
-    MecabWorker.create(UNIDIC3)
-      .then((worker) => {
-        worker
-          .parse(
-            "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
-          )
-          .then((result) => {
-            expect(result).to.equal(
-              "青森 県 と 秋田 県 に またがり 所在 する 十和田 湖 、 御 鼻 部 山 展望 台 から の 展望"
-            );
-            done();
-          })
-          .catch((error) => done(error));
-      })
-      .catch((error) => done(error));
+  it("creates a worker with UNIDIC3 and parses a string, inserting spaces", async function () {
+    const worker = await MecabWorker.create(UNIDIC3);
+    const result = await worker.parse(
+      "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
+    );
+    expect(result).to.equal(
+      "青森 県 と 秋田 県 に またがり 所在 する 十和田 湖 、 御 鼻 部 山 展望 台 から の 展望"
+    );
   });
 
-  it("parses a string, returning a node for each word (using unidic3)", (done) => {
-    MecabWorker.create(UNIDIC3)
-      .then((worker) => {
-        worker
-          .parseToNodes(
-            "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
-          )
-          .then((result) => {
-            expect(result.map((node) => node.surface).join(" ")).to.equal(
-              "青森 県 と 秋田 県 に またがり 所在 する 十和田 湖 、 御 鼻 部 山 展望 台 から の 展望"
-            );
-            for (const node of result) {
-              expect(node.feature.kana).to.not.be.undefined;
-            }
-            done();
-          })
-          .catch((error) => done(error));
-      })
-      .catch((error) => done(error));
+  it("creates a worker with UNIDIC3 and parses a string, returning a node for each word", async function () {
+    const worker = await MecabWorker.create(UNIDIC3);
+    const nodes = await worker.parseToNodes(
+      "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
+    );
+    expect(nodes.map((node) => node.surface).join(" ")).to.equal(
+      "青森 県 と 秋田 県 に またがり 所在 する 十和田 湖 、 御 鼻 部 山 展望 台 から の 展望"
+    );
+    for (const node of nodes) {
+      expect(node.features).to.have.lengthOf(29);
+      expect(node.feature.kana).to.not.be.undefined;
+    }
+  });
+
+  it("creates a worker with IPADIC and parses a string, inserting spaces", async function () {
+    const worker = await MecabWorker.create(IPADIC);
+    const result = await worker.parse(
+      "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
+    );
+    expect(result).to.equal(
+      "青森 県 と 秋田 県 に またがり 所在 する 十和田湖 、 御鼻部山 展望 台 から の 展望"
+    );
+  });
+
+  it("creates a worker with IPADIC and parses a string, returning a node for each word", async function () {
+    const worker = await MecabWorker.create(IPADIC);
+    const nodes = await worker.parseToNodes(
+      "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
+    );
+    expect(nodes.map((node) => node.surface).join(" ")).to.equal(
+      "青森 県 と 秋田 県 に またがり 所在 する 十和田湖 、 御鼻部山 展望 台 から の 展望"
+    );
+    for (const node of nodes) {
+      expect(node.features).to.have.lengthOf(9);
+      expect(node.feature.kana).to.be.undefined;
+    }
+  });
+
+  it("creates a worker with JUMANDIC and parses a string, inserting spaces", async function () {
+    const worker = await MecabWorker.create(JUMANDIC);
+    const result = await worker.parse(
+      "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
+    );
+    expect(result).to.equal(
+      "青森 県 と 秋田 県 に またがり 所在 する 十和田 湖 、 御 鼻 部 山 展望 台 から の 展望"
+    );
+  });
+
+  it("creates a worker with JUMANDIC and parses a string, returning a node for each word", async function () {
+    const worker = await MecabWorker.create(JUMANDIC);
+    const nodes = await worker.parseToNodes(
+      "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
+    );
+    expect(nodes.map((node) => node.surface).join(" ")).to.equal(
+      "青森 県 と 秋田 県 に またがり 所在 する 十和田 湖 、 御 鼻 部 山 展望 台 から の 展望"
+    );
+    for (const node of nodes) {
+      expect(node.features).to.have.lengthOf(7);
+      expect(node.feature.kana).to.be.undefined;
+    }
   });
 });

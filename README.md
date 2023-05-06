@@ -15,7 +15,7 @@ for (let node of nodes) {
 }
 ```
 
-MeCab was compiled to WASM and runs in a background thread via the [Web Workers API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). It's necessary to provide a dictionary. I did supply some helper variables `UNIDIC2` and `UNIDIC3`. The corresponding files are available here: <https://github.com/leyhline/mecab-web-worker/releases/tag/v0.2.0> By default, `MecabWorker` expects the zip files at the page's root but it's possible to change this. After the first download the extracted files are persisted in the browser cache (using [CacheStorage](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage)) to avoid repeated downloads.
+MeCab was compiled to WASM and runs in a background thread via the [Web Workers API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). It's necessary to provide a dictionary. I did supply some helper variables `UNIDIC2`, `UNIDIC3`, `IPADIC`, `JUMANDIC`. The corresponding files are available here: <https://github.com/leyhline/mecab-web-worker/releases/tag/v0.2.1> By default, `MecabWorker` expects the zip files at the page's root but it's possible to change this. After the first download the extracted files are persisted in the browser cache (using [CacheStorage](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage)) to avoid repeated downloads.
 
 ## Motivation
 

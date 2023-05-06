@@ -16,6 +16,16 @@ export const UNIDIC3: Dictionary<UnidicFeature29> = {
   wrapper: createUnidicFeature29,
 };
 
+export const IPADIC: Dictionary = {
+  url: "/ipadic-2.7.0_bin.zip",
+  cacheName: "ipadic-2.7.0_bin",
+};
+
+export const JUMANDIC: Dictionary = {
+  url: "/jumandic-7.0_bin.zip",
+  cacheName: "jumandic-7.0_bin",
+};
+
 export type Features = { [key: string]: string };
 
 function createUnidicFeature26(features: string[]): UnidicFeature26 {
