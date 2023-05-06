@@ -34,7 +34,7 @@ describe("MecabWorker integration tests", () => {
       .catch((error) => done(error));
   });
 
-  it("parses a string, returning a node for each word (using unidic3)", (done) => {
+  it("parses a string, returning a node for each word (using unidic2)", (done) => {
     MecabWorker.create(UNIDIC2)
       .then((worker) => {
         worker
