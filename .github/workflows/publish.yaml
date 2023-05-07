@@ -1,4 +1,4 @@
-name: Publish Package to npmjs and GitHub Package Registry
+name: publish to npmjs
 on:
   release:
     types: [published]
@@ -28,7 +28,7 @@ jobs:
           name: mecab-wasm
           path: out/
           if-no-files-found: error
-  publish-npm:
+  publish:
     needs: build-wasm
     runs-on: ubuntu-22.04
     steps:
@@ -46,25 +46,3 @@ jobs:
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-  publish-github:
-    needs: build-wasm
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: mecab-wasm
-          path: src/
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          registry-url: "https://npm.pkg.github.com"
-          scope: "@leyhline"
-      - run: npm ci
-      - run: npm run build
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

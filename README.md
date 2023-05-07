@@ -1,3 +1,5 @@
+[![integration tests](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml/badge.svg)](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml)
+
 # mecab-web-worker
 
 Using [MeCab](https://github.com/taku910/mecab) for Japanese segmentation in the browser. Inspired by [fugashi](https://github.com/polm/fugashi)'s API.
