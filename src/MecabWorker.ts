@@ -84,7 +84,7 @@ interface MecabWorkerOptions {
  * simple use the async functions `parse` and `parseToNodes`.
  *
  * @example
- * const worker = await MecabWorker.create()
+ * const worker = await MecabWorker.create(UNIDIC3)
  * const result = await worker.parse('青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望')
  * console.log(result)
  */

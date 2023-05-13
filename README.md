@@ -1,12 +1,18 @@
-[![integration tests](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml/badge.svg)](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml)
+[![integration tests](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml/badge.svg)](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml) [npm](https://www.npmjs.com/package/mecab-web-worker/)
 
 # mecab-web-worker
 
 Using [MeCab](https://github.com/taku910/mecab) for Japanese segmentation in the browser. Inspired by [fugashi](https://github.com/polm/fugashi)'s API.
 
+```
+npm install mecab-web-worker
+```
+
 **Only Chromium based browsers are supported since I'm using [Module Workers](https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker) and the [Compression Streams API](https://developer.mozilla.org/en-US/docs/Web/API/Compression_Streams_API).**
 
 ```javascript
+import { MecabWorker, UNIDIC3 } from "mecab-web-worker";
+
 const worker = await MecabWorker.create(UNIDIC3);
 const result = await worker.parse("和布蕪は、ワカメの付着器の上にある");
 console.log(result);

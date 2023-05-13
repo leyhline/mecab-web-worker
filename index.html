@@ -1,0 +1,53 @@
+<html>
+
+<head>
+  <title>mecab-web-worker Example</title>
+  <style>
+    :root {
+      width: 50rem;
+      font-size: 16px;
+    }
+
+    #log {
+      width: 100%;
+      height: 61px;
+      color: black;
+      background-color: lightgrey;
+      overflow-y: scroll;
+      font-family: monospace;
+      font-size: 12px;
+      line-height: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      font-size: 16px;
+    }
+
+    #output {
+      border: 1px dotted;
+    }
+
+    table {
+      width: 100%;
+    }
+
+    table,
+    td {
+      border: 1px solid;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="log"></div>
+  <label for="input">Japanese input:</label>
+  <textarea rows="5" id="input">青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望</textarea>
+  <p>Parsed output with spaces between words:</p>
+  <p id="output"></p>
+  <p>Feature table:</p>
+  <table id="outtable"></table>
+  <script type="module" src="example.js"></script>
+</body>
+
+</html>
