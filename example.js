@@ -1,4 +1,4 @@
-import { MecabWorker, IPADIC } from "./dist/index.js";
+import { MecabWorker } from "./dist/index.js";
 
 const inputElement = document.getElementById("input");
 const outputElement = document.getElementById("output");
@@ -13,28 +13,42 @@ function appendToLog(message) {
   brElement.scrollIntoView();
 }
 
-const worker = await MecabWorker.create(IPADIC, {
-  onCache: (filename) => appendToLog("file read from cache: " + filename),
-  onUnzip: (filename) => console.log("unzipped file: " + filename),
-});
+let worker;
+try {
+  worker = await MecabWorker.create(
+    { url: "ipadic-2.7.0_bin.zip", cacheName: "ipadic-2.7.0_bin" },
+    {
+      onCache: (filename) => appendToLog("file read from cache: " + filename),
+      onUnzip: (filename) => console.log("unzipped file: " + filename),
+    }
+  );
+} catch (error) {
+  appendToLog(error.message);
+  throw error;
+}
 
 async function parse() {
-  const parsed = await worker.parse(inputElement.value);
-  const textNode = document.createTextNode(parsed);
-  outputElement.replaceChildren(textNode);
+  try {
+    const parsed = await worker.parse(inputElement.value);
+    const textNode = document.createTextNode(parsed);
+    outputElement.replaceChildren(textNode);
 
-  const parsedNodes = await worker.parseToNodes(inputElement.value);
-  const trElements = parsedNodes.map((node) => {
-    const trElement = document.createElement("tr");
-    node.features.forEach((feature) => {
-      const tdElement = document.createElement("td");
-      const textNode = document.createTextNode(feature);
-      tdElement.appendChild(textNode);
-      trElement.appendChild(tdElement);
+    const parsedNodes = await worker.parseToNodes(inputElement.value);
+    const trElements = parsedNodes.map((node) => {
+      const trElement = document.createElement("tr");
+      node.features.forEach((feature) => {
+        const tdElement = document.createElement("td");
+        const textNode = document.createTextNode(feature);
+        tdElement.appendChild(textNode);
+        trElement.appendChild(tdElement);
+      });
+      return trElement;
     });
-    return trElement;
-  });
-  outTableElement.replaceChildren(...trElements);
+    outTableElement.replaceChildren(...trElements);
+  } catch (error) {
+    appendToLog(error.message);
+    throw error;
+  }
 }
 
 parse();
