@@ -19,7 +19,7 @@ try {
     { url: "../ipadic-2.7.0_bin.zip", cacheName: "ipadic-2.7.0_bin" },
     {
       onCache: (filename) => appendToLog("file read from cache: " + filename),
-      onUnzip: (filename) => console.log("unzipped file: " + filename),
+      onUnzip: (filename) => appendToLog("unzipped file: " + filename),
     }
   );
 } catch (error) {
