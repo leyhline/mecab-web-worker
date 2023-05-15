@@ -16,14 +16,14 @@ function appendToLog(message) {
 let worker;
 try {
   worker = await MecabWorker.create(
-    { url: "ipadic-2.7.0_bin.zip", cacheName: "ipadic-2.7.0_bin" },
+    { url: "../ipadic-2.7.0_bin.zip", cacheName: "ipadic-2.7.0_bin" },
     {
       onCache: (filename) => appendToLog("file read from cache: " + filename),
       onUnzip: (filename) => console.log("unzipped file: " + filename),
     }
   );
 } catch (error) {
-  appendToLog(error.message);
+  appendToLog(error);
   throw error;
 }
 
@@ -46,7 +46,7 @@ async function parse() {
     });
     outTableElement.replaceChildren(...trElements);
   } catch (error) {
-    appendToLog(error.message);
+    appendToLog(error);
     throw error;
   }
 }
