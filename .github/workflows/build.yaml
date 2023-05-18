@@ -43,9 +43,9 @@ jobs:
         with:
           node-version: 18
       - uses: browser-actions/setup-chrome@v1
-      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.1/ipadic-2.7.0_bin.zip
-      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.1/jumandic-7.0_bin.zip
-      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.1/unidic-mecab-2.1.2_bin.zip
+      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.2/ipadic-2.7.0_bin.zip
+      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.2/jumandic-7.0_bin.zip
+      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.2/unidic-mecab-2.1.2_bin.zip
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox
       - run: npm test
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.1/ipadic-2.7.0_bin.zip
+      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.2/ipadic-2.7.0_bin.zip
       - run: npm ci
       - run: npm run build
       - uses: actions/configure-pages@v3
