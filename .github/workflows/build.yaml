@@ -1,5 +1,8 @@
 name: integration tests
-on: [push]
+on:
+  push:
+    branches:
+      - main
 permissions:
   contents: read
   pages: write
@@ -49,7 +52,6 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox
       - run: npm test
-
   deploy-pages:
     needs: test
     environment:
