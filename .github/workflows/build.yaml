@@ -46,8 +46,10 @@ jobs:
       - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.1/ipadic-2.7.0_bin.zip
       - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.1/jumandic-7.0_bin.zip
       - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.1/unidic-mecab-2.1.2_bin.zip
-      - run: wget -nv https://github.com/leyhline/mecab-web-worker/releases/download/v0.2.1/unidic-3.1.0.zip
-      - run: npm install-ci-test
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox
+      - run: npm test
+
   deploy-pages:
     needs: test
     environment:

@@ -103,6 +103,11 @@ export class MecabWorker<T extends Features = Record<string, never>> {
   }
 
   constructor(wrapper?: (feature: string[]) => T) {
+    if (!testModuleWorkerSupport()) {
+      throw new Error(
+        "Cannot initialize MeCab. Module workers are not supported in your browser."
+      );
+    }
     this.wrapper = wrapper;
     // Initially, I wanted to use `class MecabWorker extends Worker` and
     // `super(new URL(...)` but it seems this wasn't recognized by many
@@ -184,4 +189,19 @@ export class MecabWorker<T extends Features = Record<string, never>> {
     this.worker.addEventListener("message", listener);
     this.worker.postMessage(payload);
   }
+}
+
+/**
+ * Link to stackoverflow
+ */
+function testModuleWorkerSupport(): boolean {
+  let supports = false;
+  const tester: WorkerOptions = {
+    get type() {
+      supports = true;
+      return undefined;
+    },
+  };
+  new Worker("data:,", tester).terminate();
+  return supports;
 }

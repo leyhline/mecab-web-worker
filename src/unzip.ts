@@ -8,6 +8,11 @@ declare class DecompressionStream extends TransformStream<
 export async function unzipDictionary(
   url: string
 ): Promise<ReadableStream<File>> {
+  if (!testDecompressionStreamSupport()) {
+    throw new Error(
+      "Cannot unzip dictionary. DecompressionStream API is not supported by this browser."
+    );
+  }
   const zip = await fetch(url);
   if (zip.ok && zip.body) {
     const fileStream = await unzip(zip.body);
@@ -17,6 +22,10 @@ export async function unzipDictionary(
       `Failed to fetch dictionary: ${url} (${zip.status} ${zip.statusText})`
     );
   }
+}
+
+function testDecompressionStreamSupport(): boolean {
+  return typeof DecompressionStream !== "undefined";
 }
 
 async function unzip(
