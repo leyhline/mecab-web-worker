@@ -236,7 +236,7 @@ async function loadDictionaryFiles(
   noCache = false
 ): Promise<File[]> {
   if (noCache || !(await caches.has(cacheName))) {
-    return loadDictionaryFilesFromNetwork(cacheName, url);
+    return loadDictionaryFilesFromNetwork(cacheName, url, noCache);
   } else {
     return loadDictionaryFilesFromCache(cacheName);
   }
@@ -273,31 +273,45 @@ async function loadDictionaryFilesFromCache(
  */
 async function loadDictionaryFilesFromNetwork(
   cacheName: string,
-  url: string
+  url: string,
+  noCache: boolean
 ): Promise<File[]> {
-  const c = tryForCachesApi();
-  const cache = await c.open(cacheName);
-  try {
-    const stream = await unzipDictionary(url);
-    const reader = stream.getReader();
-    const files: File[] = [];
+  const stream = await unzipDictionary(url);
+  const reader = stream.getReader();
+  const files: File[] = [];
+  if (noCache) {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       const message: MecabUnzip = { type: "unzip", filename: value.name };
       postMessage(message);
-      const { pathname, response } = fileToResponse(value);
-      await cache.put("/" + pathname, response);
       files.push(value);
     }
     if (files.length === 0) {
       throw new Error("No files extracted");
     }
-    return files;
-  } catch (error) {
-    c.delete(cacheName);
-    throw error;
+  } else {
+    const c = tryForCachesApi();
+    const cache = await c.open(cacheName);
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const message: MecabUnzip = { type: "unzip", filename: value.name };
+        postMessage(message);
+        const { pathname, response } = fileToResponse(value);
+        await cache.put("/" + pathname, response);
+        files.push(value);
+      }
+      if (files.length === 0) {
+        throw new Error("No files extracted");
+      }
+    } catch (error) {
+      c.delete(cacheName);
+      throw error;
+    }
   }
+  return files;
 }
 
 function tryForCachesApi(): CacheStorage {
