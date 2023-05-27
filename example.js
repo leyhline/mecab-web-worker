@@ -4,6 +4,7 @@ const inputElement = document.getElementById("input");
 const outputElement = document.getElementById("output");
 const outTableElement = document.getElementById("outtable");
 const logElement = document.getElementById("log");
+const progressElement = document.getElementById("progress");
 
 function appendToLog(message) {
   const textNode = document.createTextNode(message);
@@ -22,8 +23,10 @@ try {
       onUnzip: (filename) => appendToLog("unzipped file: " + filename),
     }
   );
+  progressElement.value = 1;
 } catch (error) {
   appendToLog(error);
+  progressElement.value = 0;
   throw error;
 }
 

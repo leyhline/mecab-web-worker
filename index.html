@@ -20,6 +20,10 @@
       line-height: 12px;
     }
 
+    progress {
+      width: 100%;
+    }
+
     textarea {
       width: 100%;
       font-size: 16px;
@@ -41,7 +45,10 @@
 </head>
 
 <body>
-  <div id="log"></div>
+  <div>
+    <div id="log"></div>
+    <progress id="progress" max="1"></progress>
+  </div>
   <label for="input">Japanese input:</label>
   <textarea rows="5" id="input">青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望</textarea>
   <p>Parsed output with spaces between words:</p>
