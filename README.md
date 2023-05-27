@@ -1,4 +1,6 @@
-[![integration tests](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml/badge.svg)](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml) [npm](https://www.npmjs.com/package/mecab-web-worker/)
+[![integration tests](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml/badge.svg)](https://github.com/leyhline/mecab-web-worker/actions/workflows/build.yaml)
+[![CodeQL](https://github.com/leyhline/mecab-web-worker/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/leyhline/mecab-web-worker/actions/workflows/github-code-scanning/codeql)
+![npm](https://img.shields.io/npm/v/mecab-web-worker)
 
 # mecab-web-worker
 
@@ -11,9 +13,9 @@ npm install mecab-web-worker
 **Only Chromium based browsers are supported since I'm using [Module Workers](https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker) and the [Compression Streams API](https://developer.mozilla.org/en-US/docs/Web/API/Compression_Streams_API).**
 
 ```javascript
-import { MecabWorker, UNIDIC3 } from "mecab-web-worker";
+import { MecabWorker, UNIDIC2 } from "mecab-web-worker";
 
-const worker = await MecabWorker.create(UNIDIC3);
+const worker = await MecabWorker.create(UNIDIC2);
 const result = await worker.parse("和布蕪は、ワカメの付着器の上にある");
 console.log(result);
 
