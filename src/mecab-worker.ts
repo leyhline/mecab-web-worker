@@ -256,7 +256,12 @@ async function loadDictionaryFilesFromCache(
       response: (await cache.match(key))!,
     };
     const file = await responseToFile(responseWithPath);
-    const message: MecabCache = { type: "cache", filename: file.name };
+    const message: MecabCache = {
+      type: "cache",
+      name: file.name,
+      size: file.size,
+      total: null,
+    };
     postMessage(message);
     files.push(file);
   }
@@ -276,14 +281,19 @@ async function loadDictionaryFilesFromNetwork(
   url: string,
   noCache: boolean
 ): Promise<File[]> {
-  const stream = await unzipDictionary(url);
+  const [stream, contentLength] = await unzipDictionary(url);
   const reader = stream.getReader();
   const files: File[] = [];
   if (noCache) {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const message: MecabUnzip = { type: "unzip", filename: value.name };
+      const message: MecabUnzip = {
+        type: "unzip",
+        name: value.name,
+        size: value.size,
+        total: contentLength,
+      };
       postMessage(message);
       files.push(value);
     }
@@ -297,7 +307,12 @@ async function loadDictionaryFilesFromNetwork(
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const message: MecabUnzip = { type: "unzip", filename: value.name };
+        const message: MecabUnzip = {
+          type: "unzip",
+          name: value.name,
+          size: value.size,
+          total: contentLength,
+        };
         postMessage(message);
         const { pathname, response } = fileToResponse(value);
         await cache.put("/" + pathname, response);

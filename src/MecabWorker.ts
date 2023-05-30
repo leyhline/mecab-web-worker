@@ -11,12 +11,16 @@ export interface MecabReady extends MecabDataType {
 
 export interface MecabUnzip extends MecabDataType {
   type: "unzip";
-  filename: string;
+  name: string;
+  size: number;
+  total: number | null;
 }
 
 export interface MecabCache extends MecabDataType {
   type: "cache";
-  filename: string;
+  name: string;
+  size: number;
+  total: number | null;
 }
 
 export interface MecabParse extends MecabDataType {
@@ -74,8 +78,7 @@ export interface MecabMessageCallEvent extends MessageEvent {
 
 interface MecabWorkerOptions {
   noCache?: boolean;
-  onUnzip?: (filename: string) => void;
-  onCache?: (filename: string) => void;
+  onLoad?: (message: MecabUnzip | MecabCache) => void;
 }
 
 /**
@@ -122,17 +125,10 @@ export class MecabWorker<T extends Features = Record<string, never>> {
     options?: MecabWorkerOptions
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (options && options.onCache) {
+      if (options && options.onLoad) {
         this.worker.addEventListener("message", (e: MecabMessageEvent) => {
-          if (e.data.type === "cache") {
-            options.onCache!(e.data.filename);
-          }
-        });
-      }
-      if (options && options.onUnzip) {
-        this.worker.addEventListener("message", (e: MecabMessageEvent) => {
-          if (e.data.type === "unzip") {
-            options.onUnzip!(e.data.filename);
+          if (e.data.type === "cache" || e.data.type === "unzip") {
+            options.onLoad!(e.data);
           }
         });
       }
