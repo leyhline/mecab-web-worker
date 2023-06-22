@@ -89,11 +89,11 @@ interface MecabWorkerOptions {
  * @example
  * const worker = await MecabWorker.create(UNIDIC3)
  * const result = await worker.parse('青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望')
- * console.log(result)
+ * const nodes = await worker.parseToNodes('青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望')
  */
 export class MecabWorker<T extends Features = Record<string, never>> {
   private worker: Worker;
-  private wrapper?: (feature: string[]) => T;
+  private wrapper?: (feature: string[]) => T | null;
   /**
    * Helper function to call `MecabWorker.init` after construction.
    */
@@ -105,7 +105,7 @@ export class MecabWorker<T extends Features = Record<string, never>> {
     return mecabWorker.init(dictionary, options).then(() => mecabWorker);
   }
 
-  constructor(wrapper?: (feature: string[]) => T) {
+  constructor(wrapper?: (feature: string[]) => T | null) {
     if (!testModuleWorkerSupport()) {
       throw new Error(
         "Cannot initialize MeCab. Module workers are not supported in your browser."
@@ -188,7 +188,7 @@ export class MecabWorker<T extends Features = Record<string, never>> {
 }
 
 /**
- * Link to stackoverflow
+ * https://stackoverflow.com/questions/62954570/javascript-feature-detect-module-support-for-web-workers
  */
 function testModuleWorkerSupport(): boolean {
   let supports = false;

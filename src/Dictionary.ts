@@ -1,7 +1,7 @@
 export interface Dictionary<T extends Features = Record<string, never>> {
   url: string;
   cacheName: string;
-  wrapper?: (feature: string[]) => T;
+  wrapper?: (feature: string[]) => T | null;
 }
 
 export const UNIDIC2: Dictionary<UnidicFeature26> = {
@@ -28,12 +28,8 @@ export const JUMANDIC: Dictionary = {
 
 export type Features = { [key: string]: string };
 
-function createUnidicFeature26(features: string[]): UnidicFeature26 {
-  const numberOfFields = 26;
-  console.assert(
-    features.length === numberOfFields,
-    `Invalid feature length, expected ${numberOfFields}, got ${features.length}`
-  );
+function createUnidicFeature26(features: string[]): UnidicFeature26 | null {
+  if (features.length !== 26) return null;
   return {
     pos1: features[0],
     pos2: features[1],
@@ -93,12 +89,8 @@ export interface UnidicFeature26 extends Features {
   aModType: string;
 }
 
-function createUnidicFeature29(features: string[]): UnidicFeature29 {
-  const numberOfFields = 29;
-  console.assert(
-    features.length === numberOfFields,
-    `Invalid feature length, expected ${numberOfFields}, got ${features.length}`
-  );
+function createUnidicFeature29(features: string[]): UnidicFeature29 | null {
+  if (features.length !== 29) return null;
   return {
     pos1: features[0],
     pos2: features[1],

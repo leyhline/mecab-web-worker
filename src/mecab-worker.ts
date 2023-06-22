@@ -166,7 +166,7 @@ class MecabNode<T extends Features = Record<string, never>> {
   readonly stat: Stat;
 
   features: string[] = [];
-  feature: T = {} as T;
+  feature: T | null = null;
 
   constructor(Module: Module, nodePtr: number) {
     this.nextPtr = Module.getValue(nodePtr + this.nextPtrOffset, "*");
