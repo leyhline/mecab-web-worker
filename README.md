@@ -10,7 +10,7 @@ Using [MeCab](https://github.com/taku910/mecab) for Japanese segmentation in the
 npm install mecab-web-worker
 ```
 
-**Only Chromium based browsers are supported since I'm using [Module Workers](https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker) and the [Compression Streams API](https://developer.mozilla.org/en-US/docs/Web/API/Compression_Streams_API).**
+**Compatibility notice: Uses [Module Workers](https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker) and the [Compression Streams API](https://developer.mozilla.org/en-US/docs/Web/API/Compression_Streams_API). These are not available in every major browser.**
 
 ```javascript
 import { MecabWorker, UNIDIC2 } from "mecab-web-worker";

@@ -5,7 +5,7 @@ on:
 jobs:
   build-wasm:
     runs-on: ubuntu-22.04
-    container: emscripten/emsdk:3.1.36
+    container: emscripten/emsdk:3.1.41
     steps:
       - uses: actions/checkout@v3
         with:
