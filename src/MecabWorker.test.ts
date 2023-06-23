@@ -36,7 +36,8 @@ describe("MecabWorker integration tests", function () {
     );
     for (const node of nodes) {
       expect(node.features).to.have.lengthOf(26);
-      expect(node.feature.kana).to.not.be.undefined;
+      expect(node.feature).to.not.be.null;
+      expect(node.feature!.kana).to.not.be.undefined;
     }
   });
 
@@ -60,7 +61,7 @@ describe("MecabWorker integration tests", function () {
     );
     for (const node of nodes) {
       expect(node.features).to.have.lengthOf(9);
-      expect(node.feature.kana).to.be.undefined;
+      expect(node.feature).to.be.null;
     }
   });
 
@@ -84,7 +85,7 @@ describe("MecabWorker integration tests", function () {
     );
     for (const node of nodes) {
       expect(node.features).to.have.lengthOf(7);
-      expect(node.feature.kana).to.be.undefined;
+      expect(node.feature).to.be.null;
     }
   });
 });
