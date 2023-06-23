@@ -17,7 +17,7 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with UNIDIC2 and parses a string, inserting spaces", async function () {
-    const worker = await MecabWorker.create(UNIDIC2, { noCache: true });
+    const worker = await MecabWorker.create(UNIDIC2, undefined, true);
     const result = await worker.parse(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );
@@ -27,7 +27,7 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with UNIDIC2 and parses a string, returning a node for each word", async function () {
-    const worker = await MecabWorker.create(UNIDIC2, { noCache: true });
+    const worker = await MecabWorker.create(UNIDIC2, undefined, true);
     const nodes = await worker.parseToNodes(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );
@@ -42,7 +42,7 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("parses a list of words using Array.map", async function () {
-    const worker = await MecabWorker.create(UNIDIC2, { noCache: true });
+    const worker = await MecabWorker.create(UNIDIC2, undefined, true);
     const result = (
       await Promise.all(
         [
@@ -67,12 +67,90 @@ describe("MecabWorker integration tests", function () {
 
   it("loads IPADIC from network and receives messages during worker creation", async function () {
     const onLoadLog: { type: string; name: string }[] = [];
-    await MecabWorker.create(IPADIC, {
-      onLoad: ({ type, name }) => {
-        onLoadLog.push({ type, name });
-      },
+    await MecabWorker.create(IPADIC, ({ type, name }) => {
+      onLoadLog.push({ type, name });
     });
-    expect(onLoadLog).has.length(8);
+    expect(onLoadLog).has.length(9);
+    expect(onLoadLog[0]).to.deep.equal({
+      type: "unzip",
+      name: "ipadic-2.7.0_bin/",
+    });
+    expect(onLoadLog[1]).to.deep.equal({
+      type: "unzip",
+      name: "ipadic-2.7.0_bin/dicrc",
+    });
+    expect(onLoadLog[2]).to.deep.equal({
+      type: "unzip",
+      name: "ipadic-2.7.0_bin/README",
+    });
+    expect(onLoadLog[3]).to.deep.equal({
+      type: "unzip",
+      name: "ipadic-2.7.0_bin/unk.dic",
+    });
+    expect(onLoadLog[4]).to.deep.equal({
+      type: "unzip",
+      name: "ipadic-2.7.0_bin/AUTHORS",
+    });
+    expect(onLoadLog[5]).to.deep.equal({
+      type: "unzip",
+      name: "ipadic-2.7.0_bin/COPYING",
+    });
+    expect(onLoadLog[6]).to.deep.equal({
+      type: "unzip",
+      name: "ipadic-2.7.0_bin/sys.dic",
+    });
+    expect(onLoadLog[7]).to.deep.equal({
+      type: "unzip",
+      name: "ipadic-2.7.0_bin/matrix.bin",
+    });
+    expect(onLoadLog[8]).to.deep.equal({
+      type: "unzip",
+      name: "ipadic-2.7.0_bin/char.bin",
+    });
+  });
+
+  it("loads IPADIC from cache and receives messages during worker creation", async function () {
+    const onLoadLog: { type: string; name: string }[] = [];
+    await MecabWorker.create(IPADIC, ({ type, name }) => {
+      onLoadLog.push({ type, name });
+    });
+    expect(onLoadLog).has.length(9);
+    expect(onLoadLog[0]).to.deep.equal({
+      type: "cache",
+      name: "ipadic-2.7.0_bin/",
+    });
+    expect(onLoadLog[1]).to.deep.equal({
+      type: "cache",
+      name: "ipadic-2.7.0_bin/dicrc",
+    });
+    expect(onLoadLog[2]).to.deep.equal({
+      type: "cache",
+      name: "ipadic-2.7.0_bin/README",
+    });
+    expect(onLoadLog[3]).to.deep.equal({
+      type: "cache",
+      name: "ipadic-2.7.0_bin/unk.dic",
+    });
+    expect(onLoadLog[4]).to.deep.equal({
+      type: "cache",
+      name: "ipadic-2.7.0_bin/AUTHORS",
+    });
+    expect(onLoadLog[5]).to.deep.equal({
+      type: "cache",
+      name: "ipadic-2.7.0_bin/COPYING",
+    });
+    expect(onLoadLog[6]).to.deep.equal({
+      type: "cache",
+      name: "ipadic-2.7.0_bin/sys.dic",
+    });
+    expect(onLoadLog[7]).to.deep.equal({
+      type: "cache",
+      name: "ipadic-2.7.0_bin/matrix.bin",
+    });
+    expect(onLoadLog[8]).to.deep.equal({
+      type: "cache",
+      name: "ipadic-2.7.0_bin/char.bin",
+    });
   });
 
   it("creates a worker with IPADIC and parses a string, inserting spaces", async function () {
@@ -100,7 +178,7 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with JUMANDIC and parses a string, inserting spaces", async function () {
-    const worker = await MecabWorker.create(JUMANDIC, { noCache: true });
+    const worker = await MecabWorker.create(JUMANDIC, undefined, true);
     const result = await worker.parse(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );
@@ -110,7 +188,7 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with JUMANDIC and parses a string, returning a node for each word", async function () {
-    const worker = await MecabWorker.create(JUMANDIC, { noCache: true });
+    const worker = await MecabWorker.create(JUMANDIC, undefined, true);
     const nodes = await worker.parseToNodes(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );

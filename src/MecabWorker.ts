@@ -53,7 +53,7 @@ export interface MecabCallInit extends MecabDataType {
   type: "init";
   cacheName: string;
   url: string;
-  noCache?: boolean;
+  noCache: boolean;
 }
 
 export interface MecabCallParse extends MecabDataType {
@@ -72,11 +72,6 @@ export type MecabCallData =
   | MecabCallParseToNodes;
 
 export type MecabMessageCallEvent = MessageEvent<MecabCallData>;
-
-interface MecabWorkerOptions {
-  noCache?: boolean;
-  onLoad?: (message: MecabUnzip | MecabCache) => void;
-}
 
 /**
  * MecabWorker subclasses Worker to provide a simple interface for interacting
@@ -99,13 +94,17 @@ export class MecabWorker<T extends Features | null = null> {
    */
   static async create<T extends Features | null = null>(
     dictionary: Dictionary<T>,
-    options?: MecabWorkerOptions
+    onLoad?: (message: MecabUnzip | MecabCache) => void,
+    noCache = false
   ): Promise<MecabWorker<T>> {
-    const mecabWorker = new MecabWorker<T>(dictionary.wrapper);
-    return mecabWorker.init(dictionary, options).then(() => mecabWorker);
+    const mecabWorker = new MecabWorker<T>(dictionary.wrapper, onLoad);
+    return mecabWorker.init(dictionary, noCache).then(() => mecabWorker);
   }
 
-  constructor(wrapper?: (feature: string[]) => T | null) {
+  constructor(
+    wrapper?: (feature: string[]) => T | null,
+    onLoad?: (message: MecabUnzip | MecabCache) => void
+  ) {
     if (!testModuleWorkerSupport()) {
       throw new Error(
         "Cannot initialize MeCab. Module workers are not supported in your browser."
@@ -119,6 +118,9 @@ export class MecabWorker<T extends Features | null = null> {
       type: "module",
     });
     this.worker.onmessage = (e: MecabMessageEvent) => {
+      if (onLoad && (e.data.type === "unzip" || e.data.type === "cache")) {
+        onLoad(e.data);
+      }
       const callback = this.pending.get(e.data.id);
       if (callback) {
         callback(e.data);
@@ -129,16 +131,13 @@ export class MecabWorker<T extends Features | null = null> {
     };
   }
 
-  async init(
-    dictionary: Dictionary<T>,
-    options?: MecabWorkerOptions
-  ): Promise<void> {
+  async init(dictionary: Dictionary<T>, noCache = false): Promise<void> {
     const message: MecabCallInit = {
       id: this.counter,
       type: "init",
       cacheName: dictionary.cacheName,
       url: dictionary.url,
-      noCache: options?.noCache,
+      noCache: noCache,
     };
     this.counter++;
     return new Promise((resolve, reject) => {
