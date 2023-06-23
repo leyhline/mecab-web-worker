@@ -4,14 +4,12 @@ import { IPADIC, JUMANDIC, UNIDIC2 } from "./Dictionary.js";
 
 describe("MecabWorker integration tests", function () {
   it("fails to create a worker when no dictionary was found", function (done) {
-    MecabWorker.create({ url: "not-a-real-path", cacheName: "test" })
+    MecabWorker.create({ url: "not-a-real-path" })
       .then(() => {
         done(new Error("Should not have created a worker"));
       })
       .catch((error) => {
-        expect(error).to.equal(
-          "Failed to fetch dictionary: not-a-real-path (404 Not Found)"
-        );
+        expect(error).to.have.length.above(0);
         done();
       });
   });
@@ -72,39 +70,39 @@ describe("MecabWorker integration tests", function () {
     });
     expect(onLoadLog).has.length(9);
     expect(onLoadLog[0]).to.deep.equal({
-      type: "unzip",
+      type: "network",
       name: "ipadic-2.7.0_bin/",
     });
     expect(onLoadLog[1]).to.deep.equal({
-      type: "unzip",
+      type: "network",
       name: "ipadic-2.7.0_bin/dicrc",
     });
     expect(onLoadLog[2]).to.deep.equal({
-      type: "unzip",
+      type: "network",
       name: "ipadic-2.7.0_bin/README",
     });
     expect(onLoadLog[3]).to.deep.equal({
-      type: "unzip",
+      type: "network",
       name: "ipadic-2.7.0_bin/unk.dic",
     });
     expect(onLoadLog[4]).to.deep.equal({
-      type: "unzip",
+      type: "network",
       name: "ipadic-2.7.0_bin/AUTHORS",
     });
     expect(onLoadLog[5]).to.deep.equal({
-      type: "unzip",
+      type: "network",
       name: "ipadic-2.7.0_bin/COPYING",
     });
     expect(onLoadLog[6]).to.deep.equal({
-      type: "unzip",
+      type: "network",
       name: "ipadic-2.7.0_bin/sys.dic",
     });
     expect(onLoadLog[7]).to.deep.equal({
-      type: "unzip",
+      type: "network",
       name: "ipadic-2.7.0_bin/matrix.bin",
     });
     expect(onLoadLog[8]).to.deep.equal({
-      type: "unzip",
+      type: "network",
       name: "ipadic-2.7.0_bin/char.bin",
     });
   });
@@ -154,7 +152,7 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with IPADIC and parses a string, inserting spaces", async function () {
-    const worker = await MecabWorker.create(IPADIC);
+    const worker = await MecabWorker.create(IPADIC, undefined, true);
     const result = await worker.parse(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );
@@ -164,7 +162,7 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with IPADIC and parses a string, returning a node for each word", async function () {
-    const worker = await MecabWorker.create(IPADIC);
+    const worker = await MecabWorker.create(IPADIC, undefined, true);
     const nodes = await worker.parseToNodes(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );

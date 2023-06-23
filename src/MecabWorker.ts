@@ -10,8 +10,8 @@ export interface MecabReady extends MecabDataType {
   type: "ready";
 }
 
-export interface MecabUnzip extends MecabDataType {
-  type: "unzip";
+export interface MecabNetwork extends MecabDataType {
+  type: "network";
   name: string;
   size: number;
   total: number | null;
@@ -43,7 +43,7 @@ export type MecabData =
   | MecabReady
   | MecabParse
   | MecabParseToNodes
-  | MecabUnzip
+  | MecabNetwork
   | MecabCache
   | MecabError;
 
@@ -51,7 +51,6 @@ export type MecabMessageEvent = MessageEvent<MecabData>;
 
 export interface MecabCallInit extends MecabDataType {
   type: "init";
-  cacheName: string;
   url: string;
   noCache: boolean;
 }
@@ -94,7 +93,7 @@ export class MecabWorker<T extends Features | null = null> {
    */
   static async create<T extends Features | null = null>(
     dictionary: Dictionary<T>,
-    onLoad?: (message: MecabUnzip | MecabCache) => void,
+    onLoad?: (message: MecabNetwork | MecabCache) => void,
     noCache = false
   ): Promise<MecabWorker<T>> {
     const mecabWorker = new MecabWorker<T>(dictionary.wrapper, onLoad);
@@ -103,7 +102,7 @@ export class MecabWorker<T extends Features | null = null> {
 
   constructor(
     wrapper?: (feature: string[]) => T | null,
-    onLoad?: (message: MecabUnzip | MecabCache) => void
+    onLoad?: (message: MecabNetwork | MecabCache) => void
   ) {
     if (!testModuleWorkerSupport()) {
       throw new Error(
@@ -118,7 +117,7 @@ export class MecabWorker<T extends Features | null = null> {
       type: "module",
     });
     this.worker.onmessage = (e: MecabMessageEvent) => {
-      if (onLoad && (e.data.type === "unzip" || e.data.type === "cache")) {
+      if (onLoad && (e.data.type === "network" || e.data.type === "cache")) {
         onLoad(e.data);
       }
       const callback = this.pending.get(e.data.id);
@@ -135,7 +134,6 @@ export class MecabWorker<T extends Features | null = null> {
     const message: MecabCallInit = {
       id: this.counter,
       type: "init",
-      cacheName: dictionary.cacheName,
       url: dictionary.url,
       noCache: noCache,
     };

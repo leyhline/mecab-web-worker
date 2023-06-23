@@ -3,7 +3,7 @@ import createModule from "./mecab.js";
 
 import type {
   MecabReady,
-  MecabUnzip,
+  MecabNetwork,
   MecabCache,
   MecabData,
   MecabCallData,
@@ -52,11 +52,7 @@ onmessage = (e: MecabMessageCallEvent) => {
 async function initTagger(data: MecabCallInit) {
   try {
     const Module = await createModule();
-    const files = await loadDictionaryFiles(
-      data.cacheName,
-      data.url,
-      data.noCache
-    );
+    const files = await loadDictionaryFiles(data.url, data.noCache);
     mountDicionaryFiles(Module, files);
     mecabTagger = new MecabTagger(Module);
     const readyMessage: MecabReady = { id: data.id, type: "ready" };
@@ -235,109 +231,79 @@ function mountDicionaryFiles(Module: Module, files: File[]): void {
   Module.FS.chdir("/mecab/" + baseDir);
 }
 
-interface ResponseWithPath {
-  pathname: string;
-  response: Response;
-}
-
 async function loadDictionaryFiles(
-  cacheName: string,
   url: string,
-  noCache = false
+  noCache = false,
+  cacheName = "v0.2.2"
 ): Promise<File[]> {
   if (noCache || !(await caches.has(cacheName))) {
     return loadDictionaryFilesFromNetwork(cacheName, url, noCache);
   } else {
-    return loadDictionaryFilesFromCache(cacheName);
+    return loadDictionaryFilesFromCache(cacheName, url);
   }
 }
 
-async function loadDictionaryFilesFromCache(
-  cacheName: string
-): Promise<File[]> {
-  const c = tryForCachesApi();
-  const cache = await c.open(cacheName);
-  const keys = await cache.keys();
-  if (keys.length === 0) throw new Error("Cache is empty");
-  const files: File[] = [];
-  for (const key of keys) {
-    const responseWithPath: ResponseWithPath = {
-      pathname: new URL(key.url).pathname.slice(1),
-      response: (await cache.match(key))!,
-    };
-    const file = await responseToFile(responseWithPath);
-    const message: MecabCache = {
-      id: 0,
-      type: "cache",
-      name: file.name,
-      size: file.size,
-      total: null,
-    };
-    postMessage(message);
-    files.push(file);
-  }
-  return files;
-}
-
-/**
- * Downloads the dictionary zip file from the given url, places the extracted files
- * in the cache and returns the files as File objects.
- *
- * @param cacheName the name of the newly created cache
- * @param url the url of the dictonary zip file
- * @returns the extracted files
- */
 async function loadDictionaryFilesFromNetwork(
   cacheName: string,
   url: string,
   noCache: boolean
 ): Promise<File[]> {
-  const [stream, contentLength] = await unzipDictionary(url);
-  const reader = stream.getReader();
-  const files: File[] = [];
   if (noCache) {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const message: MecabUnzip = {
-        id: 0,
-        type: "unzip",
-        name: value.name,
-        size: value.size,
-        total: contentLength,
-      };
-      postMessage(message);
-      files.push(value);
-    }
-    if (files.length === 0) {
-      throw new Error("No files extracted");
-    }
+    const response = await fetch(url);
+    return collectFiles(response, "network");
   } else {
     const c = tryForCachesApi();
-    const cache = await c.open(cacheName);
     try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const message: MecabUnzip = {
-          id: 0,
-          type: "unzip",
-          name: value.name,
-          size: value.size,
-          total: contentLength,
-        };
-        postMessage(message);
-        const { pathname, response } = fileToResponse(value);
-        await cache.put("/" + pathname, response);
-        files.push(value);
-      }
-      if (files.length === 0) {
-        throw new Error("No files extracted");
-      }
+      const cache = await c.open(cacheName);
+      await cache.add(url);
+      const response = await cache.match(url);
+      if (!response) throw new Error("Dictionary not cached: " + url);
+      return collectFiles(response, "network");
     } catch (error) {
       c.delete(cacheName);
       throw error;
     }
+  }
+}
+
+async function loadDictionaryFilesFromCache(
+  cacheName: string,
+  url: string
+): Promise<File[]> {
+  const c = tryForCachesApi();
+  try {
+    const cache = await c.open(cacheName);
+    const response = await cache.match(url);
+    if (!response) throw new Error("Dictionary not cached: " + url);
+    return collectFiles(response, "cache");
+  } catch (error) {
+    c.delete(cacheName);
+    throw error;
+  }
+}
+
+async function collectFiles(
+  response: Response,
+  type: "network" | "cache"
+): Promise<File[]> {
+  const files: File[] = [];
+  const [stream, contentLength] = await unzipDictionary(response);
+  const reader = stream.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const message: MecabNetwork | MecabCache = {
+      id: 0,
+      type: type,
+      name: value.name,
+      size: value.size,
+      total: contentLength,
+    };
+    postMessage(message);
+    files.push(value);
+  }
+  if (files.length === 0) {
+    throw new Error("No files extracted");
   }
   return files;
 }
@@ -350,17 +316,6 @@ function tryForCachesApi(): CacheStorage {
       "CacheStorage is not supported; do you use HTTPS? See: https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage"
     );
   }
-}
-
-async function responseToFile({
-  pathname,
-  response,
-}: ResponseWithPath): Promise<File> {
-  return new File([await response.blob()], pathname);
-}
-
-function fileToResponse(file: File): ResponseWithPath {
-  return { pathname: file.name, response: new Response(file) };
 }
 
 export type { MecabNode };

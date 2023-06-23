@@ -1,29 +1,24 @@
 export interface Dictionary<T extends Features | null = null> {
   url: string;
-  cacheName: string;
   wrapper?: (features: string[]) => T | null;
 }
 
 export const UNIDIC2: Dictionary<UnidicFeature26> = {
   url: "/unidic-mecab-2.1.2_bin.zip",
-  cacheName: "unidic-2.1.2_bin",
   wrapper: createUnidicFeature26,
 };
 
 export const UNIDIC3: Dictionary<UnidicFeature29> = {
   url: "/unidic-3.1.0.zip",
-  cacheName: "unidic-3.1.0",
   wrapper: createUnidicFeature29,
 };
 
 export const IPADIC: Dictionary = {
   url: "/ipadic-2.7.0_bin.zip",
-  cacheName: "ipadic-2.7.0_bin",
 };
 
 export const JUMANDIC: Dictionary = {
   url: "/jumandic-7.0_bin.zip",
-  cacheName: "jumandic-7.0_bin",
 };
 
 export type Features = { [key: string]: string };
