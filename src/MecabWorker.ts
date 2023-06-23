@@ -2,6 +2,7 @@ import type { Dictionary, Features } from "./Dictionary.js";
 import type { MecabNode } from "./mecab-worker.js";
 
 interface MecabDataType {
+  id: number;
   type: string;
 }
 
@@ -46,9 +47,7 @@ export type MecabData =
   | MecabCache
   | MecabError;
 
-export interface MecabMessageEvent extends MessageEvent {
-  data: MecabData;
-}
+export type MecabMessageEvent = MessageEvent<MecabData>;
 
 export interface MecabCallInit extends MecabDataType {
   type: "init";
@@ -72,9 +71,7 @@ export type MecabCallData =
   | MecabCallParse
   | MecabCallParseToNodes;
 
-export interface MecabMessageCallEvent extends MessageEvent {
-  data: MecabCallData;
-}
+export type MecabMessageCallEvent = MessageEvent<MecabCallData>;
 
 interface MecabWorkerOptions {
   noCache?: boolean;
@@ -91,13 +88,16 @@ interface MecabWorkerOptions {
  * const result = await worker.parse('青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望')
  * const nodes = await worker.parseToNodes('青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望')
  */
-export class MecabWorker<T extends Features = Record<string, never>> {
+export class MecabWorker<T extends Features | null = null> {
   private worker: Worker;
-  private wrapper?: (feature: string[]) => T | null;
+  private wrapper?: (features: string[]) => T | null;
+  private pending: Map<number, (data: MecabData) => void> = new Map();
+  private counter = 1;
+
   /**
    * Helper function to call `MecabWorker.init` after construction.
    */
-  static async create<T extends Features = Record<string, never>>(
+  static async create<T extends Features | null = null>(
     dictionary: Dictionary<T>,
     options?: MecabWorkerOptions
   ): Promise<MecabWorker<T>> {
@@ -118,72 +118,92 @@ export class MecabWorker<T extends Features = Record<string, never>> {
     this.worker = new Worker(new URL("./mecab-worker.js", import.meta.url), {
       type: "module",
     });
+    this.worker.onmessage = (e: MecabMessageEvent) => {
+      const callback = this.pending.get(e.data.id);
+      if (callback) {
+        callback(e.data);
+        this.pending.delete(e.data.id);
+      } else if (e.data.id > 0) {
+        console.warn("No pending request for message", e.data);
+      }
+    };
   }
 
   async init(
     dictionary: Dictionary<T>,
     options?: MecabWorkerOptions
   ): Promise<void> {
+    const message: MecabCallInit = {
+      id: this.counter,
+      type: "init",
+      cacheName: dictionary.cacheName,
+      url: dictionary.url,
+      noCache: options?.noCache,
+    };
+    this.counter++;
     return new Promise((resolve, reject) => {
-      if (options && options.onLoad) {
-        this.worker.addEventListener("message", (e: MecabMessageEvent) => {
-          if (e.data.type === "cache" || e.data.type === "unzip") {
-            options.onLoad!(e.data);
-          }
-        });
-      }
-      const listener = (e: MecabMessageEvent) => {
-        if (e.data.type === "ready") {
-          this.worker.removeEventListener("message", listener);
+      this.pending.set(message.id, (data) => {
+        if (data.type === "ready") {
           resolve();
-        } else if (e.data.type == "error") {
-          this.worker.removeEventListener("message", listener);
-          reject(e.data.message);
+        } else if (data.type === "error") {
+          reject(data.message);
+        } else {
+          reject("Unexpected message: " + data);
         }
-      };
-      this.worker.addEventListener("message", listener);
-      const initMessage: MecabCallInit = {
-        type: "init",
-        cacheName: dictionary.cacheName,
-        url: dictionary.url,
-        noCache: options?.noCache,
-      };
-      this.worker.postMessage(initMessage);
+      });
+      this.worker.postMessage(message);
     });
   }
 
   async parse(text: string): Promise<string> {
-    return new Promise((resolve) =>
-      this.handleParse(resolve, { type: "parse", arg: text })
-    );
-  }
-
-  async parseToNodes(text: string): Promise<MecabNode<T>[]> {
-    const nodesPromise = new Promise<MecabNode<T>[]>((resolve) =>
-      this.handleParse(resolve, { type: "parseToNodes", arg: text })
-    );
-    if (this.wrapper) {
-      return nodesPromise.then((nodes) => {
-        nodes.forEach((node) => (node.feature = this.wrapper!(node.features)));
-        return nodes;
-      });
-    } else {
-      return nodesPromise;
-    }
-  }
-
-  private handleParse(
-    resolve: (value: any) => void,
-    payload: MecabCallData
-  ): void {
-    const listener = (e: MecabMessageEvent) => {
-      if (e.data.type === payload.type) {
-        this.worker.removeEventListener("message", listener);
-        resolve(e.data.result);
-      }
+    const message: MecabCallParse = {
+      id: this.counter,
+      type: "parse",
+      arg: text,
     };
-    this.worker.addEventListener("message", listener);
-    this.worker.postMessage(payload);
+    this.counter++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(message.id, (value) => {
+        if (value.type === "parse") {
+          resolve(value.result);
+        } else if (value.type === "error") {
+          reject(value.message);
+        } else {
+          reject("Unexpected message: " + value);
+        }
+      });
+      this.worker.postMessage(message);
+    });
+  }
+
+  async parseToNodes(text: string): Promise<MecabNode<T | null>[]> {
+    const message: MecabCallParseToNodes = {
+      id: this.counter,
+      type: "parseToNodes",
+      arg: text,
+    };
+    this.counter++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(message.id, (value) => {
+        if (value.type === "parseToNodes") {
+          const nodes: MecabNode<null>[] = value.result;
+          if (this.wrapper) {
+            const wrappedNodes: MecabNode<T>[] = nodes.map((node) => ({
+              ...node,
+              feature: this.wrapper!(node.features),
+            }));
+            resolve(wrappedNodes);
+          } else {
+            resolve(nodes);
+          }
+        } else if (value.type === "error") {
+          reject(value.message);
+        } else {
+          reject("Unexpected message: " + value);
+        }
+      });
+      this.worker.postMessage(message);
+    });
   }
 }
 

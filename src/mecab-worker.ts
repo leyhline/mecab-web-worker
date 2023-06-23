@@ -32,6 +32,7 @@ onmessage = (e: MecabMessageCallEvent) => {
       break;
     case "parse":
       result = {
+        id: data.id,
         type: "parse",
         result: mecabTagger.parse(data.arg),
       };
@@ -39,6 +40,7 @@ onmessage = (e: MecabMessageCallEvent) => {
       break;
     case "parseToNodes":
       result = {
+        id: data.id,
         type: "parseToNodes",
         result: mecabTagger.parseToNodeList(data.arg),
       };
@@ -57,10 +59,11 @@ async function initTagger(data: MecabCallInit) {
     );
     mountDicionaryFiles(Module, files);
     mecabTagger = new MecabTagger(Module);
-    const readyMessage: MecabReady = { type: "ready" };
+    const readyMessage: MecabReady = { id: data.id, type: "ready" };
     postMessage(readyMessage);
   } catch (error: any) {
     const errorMsg: MecabError = {
+      id: data.id,
       type: "error",
       message: error.message,
     };
@@ -108,6 +111,7 @@ class MecabTagger {
       this.taggerPtr = this.mecab_new(argc, argv);
       if (this.taggerPtr === 0) {
         const error: MecabError = {
+          id: 0,
           type: "error",
           message: "Failed initializing MeCab. Are the dictionaries mounted?",
         };
@@ -151,14 +155,14 @@ enum Stat {
   MECAB_EON_NODE,
 }
 
-class MecabNode<T extends Features = Record<string, never>> {
+class MecabNode<T extends Features | null = null> {
   // accessing the struct fields using pointer arithmetic
   // https://github.com/taku910/mecab/blob/master/mecab/src/mecab.h#L98
-  private readonly nextPtrOffset = 1 * 4;
-  private readonly surfacePtrOffset = 6 * 4;
-  private readonly featurePtrOffset = 7 * 4;
-  private readonly lengthOffset = 9 * 4;
-  private readonly statOffset = 9 * 4 + 5 * 2 + 1;
+  private static readonly nextPtrOffset = 1 * 4;
+  private static readonly surfacePtrOffset = 6 * 4;
+  private static readonly featurePtrOffset = 7 * 4;
+  private static readonly lengthOffset = 9 * 4;
+  private static readonly statOffset = 9 * 4 + 5 * 2 + 1;
 
   readonly nextPtr: number;
   readonly surface: string;
@@ -169,13 +173,19 @@ class MecabNode<T extends Features = Record<string, never>> {
   feature: T | null = null;
 
   constructor(Module: Module, nodePtr: number) {
-    this.nextPtr = Module.getValue(nodePtr + this.nextPtrOffset, "*");
-    const surfacePtr = Module.getValue(nodePtr + this.surfacePtrOffset, "*");
-    const featurePtr = Module.getValue(nodePtr + this.featurePtrOffset, "*");
+    this.nextPtr = Module.getValue(nodePtr + MecabNode.nextPtrOffset, "*");
+    const surfacePtr = Module.getValue(
+      nodePtr + MecabNode.surfacePtrOffset,
+      "*"
+    );
+    const featurePtr = Module.getValue(
+      nodePtr + MecabNode.featurePtrOffset,
+      "*"
+    );
     const featureCsv = Module.UTF8ToString(featurePtr);
-    this.length = Module.getValue(nodePtr + this.lengthOffset, "i16");
+    this.length = Module.getValue(nodePtr + MecabNode.lengthOffset, "i16");
     this.surface = Module.UTF8ToString(surfacePtr, this.length);
-    this.stat = Module.getValue(nodePtr + this.statOffset, "i8");
+    this.stat = Module.getValue(nodePtr + MecabNode.statOffset, "i8");
     if (this.stat === Stat.MECAB_NOR_NODE) {
       this.features = parseFeatureCsv(featureCsv);
     }
@@ -257,6 +267,7 @@ async function loadDictionaryFilesFromCache(
     };
     const file = await responseToFile(responseWithPath);
     const message: MecabCache = {
+      id: 0,
       type: "cache",
       name: file.name,
       size: file.size,
@@ -289,6 +300,7 @@ async function loadDictionaryFilesFromNetwork(
       const { done, value } = await reader.read();
       if (done) break;
       const message: MecabUnzip = {
+        id: 0,
         type: "unzip",
         name: value.name,
         size: value.size,
@@ -308,6 +320,7 @@ async function loadDictionaryFilesFromNetwork(
         const { done, value } = await reader.read();
         if (done) break;
         const message: MecabUnzip = {
+          id: 0,
           type: "unzip",
           name: value.name,
           size: value.size,

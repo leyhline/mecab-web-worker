@@ -1,7 +1,7 @@
-export interface Dictionary<T extends Features = Record<string, never>> {
+export interface Dictionary<T extends Features | null = null> {
   url: string;
   cacheName: string;
-  wrapper?: (feature: string[]) => T | null;
+  wrapper?: (features: string[]) => T | null;
 }
 
 export const UNIDIC2: Dictionary<UnidicFeature26> = {

@@ -41,6 +41,40 @@ describe("MecabWorker integration tests", function () {
     }
   });
 
+  it("parses a list of words using Array.map", async function () {
+    const worker = await MecabWorker.create(UNIDIC2, { noCache: true });
+    const result = (
+      await Promise.all(
+        [
+          "青森県と",
+          "秋田県に",
+          "またがり",
+          "所在する",
+          "十和田湖",
+          "御鼻部山",
+          "展望",
+          "台からの",
+          "展望",
+        ].map((word) => worker.parse(word))
+      )
+    )
+      .flat()
+      .join(" ");
+    expect(result).to.equal(
+      "青森 県 と 秋田 県 に また がり 所在 する 十和田湖 御 鼻 部 山 展望 台 から の 展望"
+    );
+  });
+
+  it("loads IPADIC from network and receives messages during worker creation", async function () {
+    const onLoadLog: { type: string; name: string }[] = [];
+    await MecabWorker.create(IPADIC, {
+      onLoad: ({ type, name }) => {
+        onLoadLog.push({ type, name });
+      },
+    });
+    expect(onLoadLog).has.length(8);
+  });
+
   it("creates a worker with IPADIC and parses a string, inserting spaces", async function () {
     const worker = await MecabWorker.create(IPADIC);
     const result = await worker.parse(
