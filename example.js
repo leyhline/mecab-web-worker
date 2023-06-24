@@ -21,10 +21,9 @@ try {
   worker = await MecabWorker.create(
     { url: "../ipadic-2.7.0_bin.zip", cacheName: "ipadic-2.7.0_bin" },
     (message) => {
-      console.log(message);
       if (message.total) {
         size += message.size;
-        progressElement.value = message.size;
+        progressElement.value = size;
         progressElement.max = message.total;
       } else {
         progressElement.removeAttribute("value");
@@ -33,9 +32,11 @@ try {
     }
   );
   progressElement.value = 1;
+  progressElement.max = 1;
 } catch (error) {
   appendToLog(error);
   progressElement.value = 0;
+  progressElement.max = 1;
   throw error;
 }
 
