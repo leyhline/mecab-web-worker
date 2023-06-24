@@ -7,7 +7,7 @@ declare class DecompressionStream extends TransformStream<
 
 export async function unzipDictionary(
   response: Response
-): Promise<[ReadableStream<File>, number | null]> {
+): Promise<[ReadableStream<[File, number]>, number | null]> {
   if (!testDecompressionStreamSupport()) {
     throw new Error(
       "Cannot unzip dictionary. DecompressionStream API is not supported by this browser."
@@ -37,7 +37,7 @@ function testDecompressionStreamSupport(): boolean {
 
 async function unzip(
   stream: ReadableStream<Uint8Array>
-): Promise<ReadableStream<File>> {
+): Promise<ReadableStream<[File, number]>> {
   return new ReadableStream({
     pull: async (controller) => {
       const reader = new ZipReader(stream);
@@ -50,10 +50,16 @@ async function unzip(
         }
         if (header.compressionMethod === 8) {
           const data = await reader.decompress(header.compressedSize);
-          controller.enqueue(new File([data], header.fileName));
+          controller.enqueue([
+            new File([data], header.fileName),
+            header.compressedSize,
+          ]);
         } else {
           const data = await reader.read(header.compressedSize);
-          controller.enqueue(new File([data], header.fileName));
+          controller.enqueue([
+            new File([data], header.fileName),
+            header.compressedSize,
+          ]);
         }
       }
     },

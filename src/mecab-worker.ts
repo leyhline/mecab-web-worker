@@ -292,15 +292,16 @@ async function collectFiles(
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
+    const [file, compressedSize] = value;
     const message: MecabNetwork | MecabCache = {
       id: 0,
       type: type,
-      name: value.name,
-      size: value.size,
+      name: file.name,
+      size: compressedSize,
       total: contentLength,
     };
     postMessage(message);
-    files.push(value);
+    files.push(file);
   }
   if (files.length === 0) {
     throw new Error("No files extracted");
