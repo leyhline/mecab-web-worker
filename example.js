@@ -21,7 +21,7 @@ try {
   worker = await MecabWorker.create(
     { url: "../ipadic-2.7.0_bin.zip", cacheName: "ipadic-2.7.0_bin" },
     (message) => {
-      if (message.total) {
+      if (size && message.total) {
         size += message.size;
         progressElement.value = size;
         progressElement.max = message.total;
