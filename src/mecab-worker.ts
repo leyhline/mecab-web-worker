@@ -234,7 +234,7 @@ function mountDicionaryFiles(Module: Module, files: File[]): void {
 async function loadDictionaryFiles(
   url: string,
   noCache = false,
-  cacheName = "v0.2.2"
+  cacheName = "v0.3.0"
 ): Promise<File[]> {
   if (noCache || !(await caches.has(cacheName))) {
     return loadDictionaryFilesFromNetwork(cacheName, url, noCache);
