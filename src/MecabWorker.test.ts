@@ -1,10 +1,9 @@
 import { expect } from "@esm-bundle/chai";
-import { MecabWorker } from "./index.js";
-import { IPADIC, JUMANDIC, UNIDIC2 } from "./Dictionary.js";
+import { MecabWorker, createUnidicFeature26 } from "./index.js";
 
 describe("MecabWorker integration tests", function () {
   it("fails to create a worker when no dictionary was found", function (done) {
-    MecabWorker.create({ url: "not-a-real-path" })
+    MecabWorker.create("wrong-url")
       .then(() => {
         done(new Error("Should not have created a worker"));
       })
@@ -15,7 +14,9 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with UNIDIC2 and parses a string, inserting spaces", async function () {
-    const worker = await MecabWorker.create(UNIDIC2, undefined, true);
+    const worker = await MecabWorker.create("/unidic-mecab-2.1.2_bin.zip", {
+      noCache: true,
+    });
     const result = await worker.parse(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );
@@ -25,7 +26,10 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with UNIDIC2 and parses a string, returning a node for each word", async function () {
-    const worker = await MecabWorker.create(UNIDIC2, undefined, true);
+    const worker = await MecabWorker.create("/unidic-mecab-2.1.2_bin.zip", {
+      noCache: true,
+      wrapper: createUnidicFeature26,
+    });
     const nodes = await worker.parseToNodes(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );
@@ -40,7 +44,9 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("parses a list of words using Array.map", async function () {
-    const worker = await MecabWorker.create(UNIDIC2, undefined, true);
+    const worker = await MecabWorker.create("/unidic-mecab-2.1.2_bin.zip", {
+      noCache: true,
+    });
     const result = (
       await Promise.all(
         [
@@ -65,8 +71,10 @@ describe("MecabWorker integration tests", function () {
 
   it("loads IPADIC from network and receives messages during worker creation", async function () {
     const onLoadLog: { type: string; name: string }[] = [];
-    await MecabWorker.create(IPADIC, ({ type, name }) => {
-      onLoadLog.push({ type, name });
+    await MecabWorker.create("/ipadic-2.7.0_bin.zip", {
+      onLoad: ({ type, name }) => {
+        onLoadLog.push({ type, name });
+      },
     });
     expect(onLoadLog).has.length(9);
     expect(onLoadLog[0]).to.deep.equal({
@@ -109,8 +117,10 @@ describe("MecabWorker integration tests", function () {
 
   it("loads IPADIC from cache and receives messages during worker creation", async function () {
     const onLoadLog: { type: string; name: string }[] = [];
-    await MecabWorker.create(IPADIC, ({ type, name }) => {
-      onLoadLog.push({ type, name });
+    await MecabWorker.create("/ipadic-2.7.0_bin.zip", {
+      onLoad: ({ type, name }) => {
+        onLoadLog.push({ type, name });
+      },
     });
     expect(onLoadLog).has.length(9);
     expect(onLoadLog[0]).to.deep.equal({
@@ -152,7 +162,9 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with IPADIC and parses a string, inserting spaces", async function () {
-    const worker = await MecabWorker.create(IPADIC, undefined, true);
+    const worker = await MecabWorker.create("/ipadic-2.7.0_bin.zip", {
+      noCache: true,
+    });
     const result = await worker.parse(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );
@@ -162,7 +174,9 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with IPADIC and parses a string, returning a node for each word", async function () {
-    const worker = await MecabWorker.create(IPADIC, undefined, true);
+    const worker = await MecabWorker.create("/ipadic-2.7.0_bin.zip", {
+      noCache: true,
+    });
     const nodes = await worker.parseToNodes(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );
@@ -176,7 +190,9 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with JUMANDIC and parses a string, inserting spaces", async function () {
-    const worker = await MecabWorker.create(JUMANDIC, undefined, true);
+    const worker = await MecabWorker.create("/jumandic-7.0_bin.zip", {
+      noCache: true,
+    });
     const result = await worker.parse(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );
@@ -186,7 +202,9 @@ describe("MecabWorker integration tests", function () {
   });
 
   it("creates a worker with JUMANDIC and parses a string, returning a node for each word", async function () {
-    const worker = await MecabWorker.create(JUMANDIC, undefined, true);
+    const worker = await MecabWorker.create("/jumandic-7.0_bin.zip", {
+      noCache: true,
+    });
     const nodes = await worker.parseToNodes(
       "青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望"
     );

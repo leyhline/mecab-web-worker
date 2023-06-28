@@ -13,9 +13,9 @@ npm install mecab-web-worker
 **Compatibility notice: Uses [Module Workers](https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker) and the [Compression Streams API](https://developer.mozilla.org/en-US/docs/Web/API/Compression_Streams_API). These are not available in every major browser.**
 
 ```javascript
-import { MecabWorker, UNIDIC2 } from "mecab-web-worker";
+import { MecabWorker } from "mecab-web-worker";
 
-const worker = await MecabWorker.create(UNIDIC2);
+const worker = await MecabWorker.create("/unidic-mecab-2.1.2_bin.zip");
 const result = await worker.parse("和布蕪は、ワカメの付着器の上にある");
 console.log(result);
 
@@ -25,7 +25,7 @@ for (let node of nodes) {
 }
 ```
 
-MeCab was compiled to WASM and runs in a background thread via the [Web Workers API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). It's necessary to provide a dictionary. I did supply some helper variables `UNIDIC2`, `UNIDIC3`, `IPADIC`, `JUMANDIC`. The corresponding files are available here: <https://github.com/leyhline/mecab-web-worker/releases/tag/v0.2.2> By default, `MecabWorker` expects the zip files at the page's root but it's possible to change this. After the first download the extracted files are persisted in the browser cache (using [CacheStorage](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage)) to avoid repeated downloads.
+MeCab was compiled to WASM and runs in a background thread via the [Web Workers API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). It's necessary to provide a dictionary (an url to a zip file). The corresponding files are available here: <https://github.com/leyhline/mecab-web-worker/releases/tag/v0.3.0> After the first download the zip file is persisted in the browser cache (using [CacheStorage](https://developer.mozilla.org/en-US/docs/Web/API/CacheStorage)) to avoid repeated downloads.
 
 ## Motivation
 

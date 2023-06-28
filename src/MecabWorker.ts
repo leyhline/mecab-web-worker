@@ -1,4 +1,4 @@
-import type { Dictionary, Features } from "./Dictionary.js";
+import type { Wrapper, Features } from "./wrappers.js";
 import type { MecabNode } from "./mecab-worker.js";
 
 interface MecabDataType {
@@ -72,19 +72,25 @@ export type MecabCallData =
 
 export type MecabMessageCallEvent = MessageEvent<MecabCallData>;
 
+export interface MecabWorkerOptions<T extends Features | null = null> {
+  onLoad?: (message: MecabNetwork | MecabCache) => void;
+  noCache?: boolean;
+  wrapper?: Wrapper<T>;
+}
+
 /**
  * MecabWorker subclasses Worker to provide a simple interface for interacting
  * with the actual worker script. Instead of using `postMessage` one can
  * simple use the async functions `parse` and `parseToNodes`.
  *
  * @example
- * const worker = await MecabWorker.create(UNIDIC3)
+ * const worker = await MecabWorker.create('/unidic-mecab-2.1.2_bin.zip')
  * const result = await worker.parse('青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望')
  * const nodes = await worker.parseToNodes('青森県と秋田県にまたがり所在する十和田湖、御鼻部山展望台からの展望')
  */
 export class MecabWorker<T extends Features | null = null> {
   private worker: Worker;
-  private wrapper?: (features: string[]) => T | null;
+  private wrapper?: Wrapper<T>;
   private pending: Map<number, (data: MecabData) => void> = new Map();
   private counter = 1;
 
@@ -92,49 +98,48 @@ export class MecabWorker<T extends Features | null = null> {
    * Helper function to call `MecabWorker.init` after construction.
    */
   static async create<T extends Features | null = null>(
-    dictionary: Dictionary<T>,
-    onLoad?: (message: MecabNetwork | MecabCache) => void,
-    noCache = false
+    url: string,
+    options?: MecabWorkerOptions<T>
   ): Promise<MecabWorker<T>> {
-    const mecabWorker = new MecabWorker<T>(dictionary.wrapper, onLoad);
-    return mecabWorker.init(dictionary, noCache).then(() => mecabWorker);
+    const mecabWorker = new MecabWorker<T>(options);
+    return mecabWorker.init(url, options?.noCache).then(() => mecabWorker);
   }
 
-  constructor(
-    wrapper?: (feature: string[]) => T | null,
-    onLoad?: (message: MecabNetwork | MecabCache) => void
-  ) {
+  constructor(options?: MecabWorkerOptions<T>) {
     if (!testModuleWorkerSupport()) {
       throw new Error(
         "Cannot initialize MeCab. Module workers are not supported in your browser."
       );
     }
-    this.wrapper = wrapper;
+    this.wrapper = options?.wrapper;
     // Initially, I wanted to use `class MecabWorker extends Worker` and
     // `super(new URL(...)` but it seems this wasn't recognized by many
     // module bundlers. Now, it's just a wrapper around a Worker.
     this.worker = new Worker(new URL("./mecab-worker.js", import.meta.url), {
       type: "module",
     });
-    this.worker.onmessage = (e: MecabMessageEvent) => {
-      if (onLoad && (e.data.type === "network" || e.data.type === "cache")) {
-        onLoad(e.data);
+    this.worker.onmessage = ({ data }: MecabMessageEvent) => {
+      if (
+        options?.onLoad &&
+        (data.type === "network" || data.type === "cache")
+      ) {
+        options.onLoad(data);
       }
-      const callback = this.pending.get(e.data.id);
+      const callback = this.pending.get(data.id);
       if (callback) {
-        callback(e.data);
-        this.pending.delete(e.data.id);
-      } else if (e.data.id > 0) {
-        console.warn("No pending request for message", e.data);
+        callback(data);
+        this.pending.delete(data.id);
+      } else if (data.id > 0) {
+        console.warn("No pending request for message", data);
       }
     };
   }
 
-  async init(dictionary: Dictionary<T>, noCache = false): Promise<void> {
+  async init(url: string, noCache = false): Promise<void> {
     const message: MecabCallInit = {
       id: this.counter,
       type: "init",
-      url: dictionary.url,
+      url: url,
       noCache: noCache,
     };
     this.counter++;

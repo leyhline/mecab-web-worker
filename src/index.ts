@@ -1,2 +1,2 @@
 export * from "./MecabWorker.js";
-export * from "./Dictionary.js"
+export * from "./wrappers.js";

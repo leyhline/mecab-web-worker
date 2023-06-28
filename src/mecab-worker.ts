@@ -13,7 +13,7 @@ import type {
 } from "./MecabWorker.js";
 
 import type { Module } from "./mecab.js";
-import type { Features } from "./Dictionary.js";
+import type { Features } from "./wrappers.js";
 
 declare function postMessage(message: MecabData): void;
 
