@@ -18,9 +18,8 @@ let worker;
 let size = 0;
 progressElement.value = size;
 try {
-  worker = await MecabWorker.create(
-    { url: "../ipadic-2.7.0_bin.zip", cacheName: "ipadic-2.7.0_bin" },
-    (message) => {
+  worker = await MecabWorker.create("../ipadic-2.7.0_bin.zip", {
+    onLoad: (message) => {
       if (size && message.total) {
         size += message.size;
         progressElement.value = size;
@@ -29,8 +28,8 @@ try {
         progressElement.removeAttribute("value");
       }
       appendToLog(`load file with ${message.type}: ${message.name}`);
-    }
-  );
+    },
+  });
   progressElement.value = 1;
   progressElement.max = 1;
 } catch (error) {
