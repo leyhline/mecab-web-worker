@@ -13,13 +13,6 @@ export default {
   },
   browsers: [
     playwrightLauncher({ product: "chromium" }),
-    playwrightLauncher({
-      product: "firefox",
-      launchOptions: {
-        firefoxUserPrefs: {
-          "dom.workers.modules.enabled": true,
-        },
-      },
-    }),
+    playwrightLauncher({ product: "firefox"  }),
   ],
 };
