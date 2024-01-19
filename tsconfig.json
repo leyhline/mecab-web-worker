@@ -1,9 +1,9 @@
 {
   "include": ["src"],
   "compilerOptions": {
-    "moduleResolution": "node16",
+    "moduleResolution": "NodeNext",
     "target": "ES2022",
-    "module": "ES2022",
+    "module": "NodeNext",
     "declaration": true,
     "sourceMap": true,
     "outDir": "dist",

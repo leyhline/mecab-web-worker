@@ -7,6 +7,7 @@ export default {
   playwright: true,
   testFramework: {
     config: {
+      ui: "bdd",
       timeout: "60000",
     },
   },
